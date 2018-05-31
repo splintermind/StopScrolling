@@ -231,5 +231,43 @@ namespace StopScrolling
 
         #endregion SG_Shop_Screen
 
+        #region SGBarracksWidget/SGBarracksRosterList
+
+        private static float m_rosterScroll = 1f;
+
+        [HarmonyPatch(typeof(SGBarracksWidget), "Reset")]
+        public static class BattleTech_UI_SGBarracksWidget_Reset_Patch
+        {
+            public static void Prefix(SGBarracksWidget __instance)
+            {
+                m_rosterScroll = 1f;
+                ScrollRect sr = __instance?.gameObject?.GetComponentInChildren<ScrollRect>(false);
+                if (sr != null)
+                {
+                    m_rosterScroll = sr.verticalNormalizedPosition;
+                    Log($"saving barracks scroll {m_rosterScroll} name {sr.name}");
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(SGBarracksRosterList), "SelectSlot")]
+        public static class BattleTech_UI_SGBarracksRosterList_SelectSlot_Patch
+        {
+            public static void Postfix(SGBarracksRosterList __instance)
+            {
+                SGBarracksWidget b = Traverse.Create(__instance).Field("barracks").GetValue<SGBarracksWidget>();
+                ScrollRect sr = b?.gameObject?.GetComponentInChildren<ScrollRect>(false);
+
+                if (sr != null)
+                {
+                    Log($"setting barracks scroll {m_rosterScroll}");
+                    sr.verticalNormalizedPosition = Mathf.Clamp(m_rosterScroll, 0f, 1f);
+                }
+
+            }
+        }
+
+        #endregion SGBarracksWidget/SGBarracksRosterList
+
     }
 }
